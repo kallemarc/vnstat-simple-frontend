@@ -58,9 +58,20 @@ $dailyTotalTx   = array_sum(array_column($dailyStats, 'tx'));
 $monthlyTotalRx = array_sum(array_column($monthlyStats, 'rx'));
 $monthlyTotalTx = array_sum(array_column($monthlyStats, 'tx'));
 
+// Nur Stunden des heutigen Tages filtern
+$hourlyStatsToday = [];
+foreach ($hourlyStats as $h) {
+    if (
+        $h['date']['year'] == $currYear &&
+        $h['date']['month'] == $currMon &&
+        $h['date']['day'] == $currDay
+    ) {
+        $hourlyStatsToday[] = $h;
+    }
+}
+
 // Stunden sortieren
-$hourlyStatsSorted = $hourlyStats;
-usort($hourlyStatsSorted, function($a, $b) {
+usort($hourlyStatsToday, function($a, $b) {
     return $a['time']['hour'] <=> $b['time']['hour'];
 });
 
@@ -110,6 +121,7 @@ usort($hourlyStatsSorted, function($a, $b) {
             font-weight: bold;
             cursor: pointer;
         }
+        /* Markierung für aktuelle Zeile */
         .highlight {
             background-color: #fffaad;
         }
@@ -119,7 +131,7 @@ usort($hourlyStatsSorted, function($a, $b) {
     <div class="container">
         <h1>Netzwerkstatistik für <?php echo htmlspecialchars($interfaceName); ?></h1>
 
-        <h2>Stundensicht</h2>
+        <h2>Stundensicht (heute)</h2>
         <details>
             <summary>Stundendetails anzeigen</summary>
             <table>
@@ -132,7 +144,7 @@ usort($hourlyStatsSorted, function($a, $b) {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($hourlyStatsSorted as $hour): ?>
+                    <?php foreach ($hourlyStatsToday as $hour): ?>
                         <?php
                             $total    = $hour['rx'] + $hour['tx'];
                             $rowHour  = (int)$hour['time']['hour'];
@@ -199,6 +211,7 @@ usort($hourlyStatsSorted, function($a, $b) {
             <tbody>
                 <?php foreach ($monthlyStats as $month): ?>
                     <?php
+                        // Wir verwenden den 1. des Monats für das Zeitstempel
                         $monthTs = strtotime($month['date']['year'] . '-' . $month['date']['month'] . '-01');
                         $monthRx = $month['rx'];
                         $monthTx = $month['tx'];
